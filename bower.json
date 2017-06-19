@@ -1,0 +1,22 @@
+{
+  "name": "idris-catenatable-lists",
+  "authors": [
+    "Risto Stevcev <risto1@gmail.com>"
+  ],
+  "description": "A port of the purescript catenatable-lists library in Idris",
+  "main": "./Data/CatList.idr",
+  "keywords": [
+    "idris",
+    "catenatable",
+    "list"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/Risto-Stevcev/idris-catenatable-lists",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
