@@ -1,0 +1,9 @@
+package catenatable_lists
+
+modules = Data.CatList
+        , Data.CatQueue
+        , Data.List.Properties
+        , Test.Data.CatQueue
+
+tests = Test.Data.CatQueue.fooIsBar
+      , Test.Data.CatQueue.fooIsNotBaz
