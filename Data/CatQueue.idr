@@ -18,6 +18,10 @@ data NonEmptyCatQueue : CatQueue a -> Type where
 data EmptyCatQueue : CatQueue a -> Type where
   IsEmptyCatQueue : EmptyCatQueue (MkCatQueue [] [])
 
+data SingletonCatQueue : CatQueue a -> Type where
+  IsSingletonCatQueueLeft : SingletonCatQueue (MkCatQueue [x] [])
+  IsSingletonCatQueueRight : SingletonCatQueue (MkCatQueue [] [x])
+
 Uninhabited (NonEmptyCatQueue (MkCatQueue [] [])) where
   uninhabited (IsNonEmptyCatQueue (Left IsNonEmpty)) impossible
   uninhabited (IsNonEmptyCatQueue (Right IsNonEmpty)) impossible
@@ -33,7 +37,6 @@ Eq q => Eq (CatQueue q) where
 empty : CatQueue a
 empty = MkCatQueue [] []
 
-
 -- | Test whether a queue is empty.
 -- |
 -- | Running time: `O(1)`
@@ -41,13 +44,11 @@ null : CatQueue a -> Bool
 null (MkCatQueue [] []) = True
 null _ = False
 
-
 -- | Append an element to the end of the queue, creating a new queue.
 -- |
 -- | Running time: `O(1)`
 snoc : CatQueue a -> a -> CatQueue a
 snoc (MkCatQueue l r) a = MkCatQueue l (a :: r)
-
 
 -- | Decompose a queue into a `Tuple` of the first element and the rest of the queue.
 -- |
@@ -80,6 +81,13 @@ uncons' (MkCatQueue (a :: as) r) = Just (a, (MkCatQueue as r))
 
 snocNotEmpty : (x : a) -> (q : CatQueue a) -> {auto prf : EmptyCatQueue q} -> NonEmptyCatQueue (snoc q x)
 snocNotEmpty x q@(MkCatQueue [] []) = the (NonEmptyCatQueue (snoc q x)) (IsNonEmptyCatQueue (Right IsNonEmpty))
+
+singletonNonEmpty : SingletonCatQueue q -> NonEmptyCatQueue q
+singletonNonEmpty IsSingletonCatQueueLeft = IsNonEmptyCatQueue (Left IsNonEmpty)
+singletonNonEmpty IsSingletonCatQueueRight = IsNonEmptyCatQueue (Right IsNonEmpty)
+
+snocEmptySingleton : (x : a) -> (q : CatQueue a) -> {auto prf : EmptyCatQueue q} -> SingletonCatQueue (snoc q x)
+snocEmptySingleton x (MkCatQueue [] []) = IsSingletonCatQueueRight
 
 nonEmptyNotNull : (q : CatQueue a) -> {auto prf : NonEmptyCatQueue q} -> null q = False
 nonEmptyNotNull (MkCatQueue [] []) {prf} = absurd prf

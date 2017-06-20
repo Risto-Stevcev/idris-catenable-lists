@@ -47,11 +47,11 @@ reverse2Append (x :: xs) ys =
     rewrite appendAssociative (reverse2 ys) (reverse2 xs) [x] in
     rewrite reverse2Append xs ys in Refl
 
-reverse2Reverse2 : (xs : List a) -> xs = reverse2 (reverse2 xs)
-reverse2Reverse2 [] = Refl
-reverse2Reverse2 (x :: xs) =
+reverse2Involution : (xs : List a) -> xs = reverse2 (reverse2 xs)
+reverse2Involution [] = Refl
+reverse2Involution (x :: xs) =
     rewrite reverse2Append (reverse2 xs) [x] in
-    rewrite reverse2Reverse2 xs in
+    rewrite reverse2Involution xs in
     Refl
 
 reverse2Reverse : (xs : List a) -> reverse2 xs = reverse xs
@@ -62,9 +62,9 @@ reverse2Reverse (x :: xs) =
     Refl
 
 -- TODO: Write a proof that doesn't need reverse2
-reverseReverse : (xs : List a) -> xs = reverse (reverse xs)
-reverseReverse xs =
+reverseInvolution : (xs : List a) -> xs = reverse (reverse xs)
+reverseInvolution xs =
     rewrite sym $ reverse2Reverse xs in
     rewrite sym $ reverse2Reverse (reverse2 xs) in
-    rewrite reverse2Reverse2 xs in
+    rewrite reverse2Involution xs in
     Refl

@@ -20,12 +20,14 @@ data NonEmptyCatList : CatList a -> Type where
 data EmptyCatList : CatList a -> Type where
   IsEmptyCatList : EmptyCatList CatNil
 
--- TODO: No way to guarantee Eq l is decidable, so remove assert_total from here
+data SingletonCatList : CatList a -> Type where
+  IsSingletonCatList : SingletonCatList (CatCons a (MkCatQueue [] []))
+
 Eq l => Eq (CatList l) where
   (==) CatNil CatNil = True
   (==) CatNil (CatCons x y) = False
   (==) (CatCons x z) CatNil = False
-  (==) (CatCons x z) (CatCons y w) = assert_total $ x == y && z == w
+  (==) (CatCons x z) (CatCons y w) = x == y && (assert_total (z == w))
   (/=) x y = not (x == y)
 
 
@@ -119,5 +121,24 @@ appendEmptyEmpty : (l : CatList a) -> (l' : CatList a) ->
                    EmptyCatList (append l l')
 appendEmptyEmpty CatNil CatNil = IsEmptyCatList
 
-appendNilRightNeutralCQ : (l : CatList a) -> (l' : CatList a) -> {auto prf : EmptyCatList l'} -> l = append l l'
-appendNilRightNeutralCQ l CatNil = Refl
+singletonNonEmpty : SingletonCatList l -> NonEmptyCatList l
+singletonNonEmpty IsSingletonCatList = IsNonEmptyCatList
+
+consEmptyNonEmpty : (x : a) -> (l : CatList a) -> {auto prf : EmptyCatList l} -> NonEmptyCatList (cons x l)
+consEmptyNonEmpty x CatNil = IsNonEmptyCatList
+
+consEmptySingleton : (x : a) -> (l : CatList a) -> {auto prf : EmptyCatList l} -> SingletonCatList (cons x l)
+consEmptySingleton x CatNil = IsSingletonCatList
+
+snocEmptyNonEmpty : (x : a) -> (l : CatList a) -> {auto prf : EmptyCatList l} -> NonEmptyCatList (snoc l x)
+snocEmptyNonEmpty x CatNil = IsNonEmptyCatList
+
+snocEmptySingleton : (x : a) -> (l : CatList a) -> {auto prf : EmptyCatList l} -> SingletonCatList (snoc l x)
+snocEmptySingleton x CatNil = IsSingletonCatList
+
+appendNilRightNeutralCL : (l : CatList a) -> (l' : CatList a) -> {auto prf : EmptyCatList l'} -> l = append l l'
+appendNilRightNeutralCL l CatNil = Refl
+
+appendNilLeftNeutralCL : (l : CatList a) -> (l' : CatList a) -> {auto prf : EmptyCatList l'} -> l = append l' l
+appendNilLeftNeutralCL CatNil CatNil = Refl
+appendNilLeftNeutralCL (CatCons x y) CatNil = Refl
