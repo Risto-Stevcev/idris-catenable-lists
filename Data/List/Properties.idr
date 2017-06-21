@@ -1,11 +1,18 @@
 module Data.List.Properties
 
+import Interfaces.Verified
+
 %hide Prelude.List.reverse
 %hide Prelude.Strings.reverse
 
 %default total
 %access public export
 
+VerifiedFunctor List where
+  functorIdentity [] = Refl
+  functorIdentity (x :: xs) = cong (functorIdentity xs)
+  functorComposition [] g1 g2 = Refl
+  functorComposition (x :: xs) g1 g2 = cong (functorComposition xs g1 g2)
 
 -- | Return the elements of a list in reverse order.
 reverse' : List a -> List a -> List a

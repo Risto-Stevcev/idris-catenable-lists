@@ -14,7 +14,7 @@ data CatQueue a = MkCatQueue (List a) (List a)
 
 data NonEmptyCatQueue : CatQueue a -> Type where
   IsNonEmptyCatQueue : Either (NonEmpty x) (NonEmpty y) ->
-                    NonEmptyCatQueue (MkCatQueue x y)
+                       NonEmptyCatQueue (MkCatQueue x y)
 
 data EmptyCatQueue : CatQueue a -> Type where
   IsEmptyCatQueue : EmptyCatQueue (MkCatQueue [] [])
@@ -30,6 +30,9 @@ data SingletonCatQueue : CatQueue a -> Type where
 Uninhabited (NonEmptyCatQueue (MkCatQueue [] [])) where
   uninhabited (IsNonEmptyCatQueue (Left IsNonEmpty)) impossible
   uninhabited (IsNonEmptyCatQueue (Right IsNonEmpty)) impossible
+
+Show q => Show (CatQueue q) where
+  show (MkCatQueue xs ys) = "MkCatQueue " ++ show xs ++ " " ++ show ys
 
 Eq q => Eq (CatQueue q) where
   (==) (MkCatQueue xs ys) (MkCatQueue zs ws) =
@@ -54,6 +57,14 @@ Functor CatQueue where
 Foldable CatQueue where
   foldr f init (MkCatQueue xs ys) = foldr f init (xs ++ reverse ys)
   foldl f init (MkCatQueue xs ys) = foldl f init (xs ++ reverse ys)
+
+VerifiedFunctor CatQueue where
+  functorIdentity (MkCatQueue xs ys) =
+    rewrite functorIdentity xs in
+    rewrite functorIdentity ys in Refl
+  functorComposition (MkCatQueue xs ys) g1 g2 =
+    rewrite functorComposition xs g1 g2 in
+    rewrite functorComposition ys g1 g2 in Refl
 
 --------------------------------------------------------------------------------
 -- Functions
