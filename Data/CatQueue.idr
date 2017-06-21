@@ -1,6 +1,7 @@
 module Data.CatQueue
 
 import Data.List.Properties
+import Interfaces.Verified
 
 %hide Prelude.List.reverse
 %hide Prelude.Strings.reverse
@@ -22,20 +23,41 @@ data SingletonCatQueue : CatQueue a -> Type where
   IsSingletonCatQueueLeft : SingletonCatQueue (MkCatQueue [x] [])
   IsSingletonCatQueueRight : SingletonCatQueue (MkCatQueue [] [x])
 
+--------------------------------------------------------------------------------
+-- Implementations
+--------------------------------------------------------------------------------
+
 Uninhabited (NonEmptyCatQueue (MkCatQueue [] [])) where
   uninhabited (IsNonEmptyCatQueue (Left IsNonEmpty)) impossible
   uninhabited (IsNonEmptyCatQueue (Right IsNonEmpty)) impossible
 
 Eq q => Eq (CatQueue q) where
-  (==) (MkCatQueue xs ys) (MkCatQueue zs ws) = xs ++ reverse ys == zs ++ reverse ws
+  (==) (MkCatQueue xs ys) (MkCatQueue zs ws) =
+    xs ++ reverse ys == zs ++ reverse ws
   (/=) x y = not (x == y)
 
+Ord q => Ord (CatQueue q) where
+  compare (MkCatQueue [] []) (MkCatQueue [] []) = EQ
+  compare (MkCatQueue [] []) _ = LT
+  compare _ (MkCatQueue [] []) = GT
+  compare (MkCatQueue xs ys) (MkCatQueue zs ws) = compare (xs ++ reverse ys) (zs ++ reverse ws)
 
--- | Create an empty queue.
--- |
--- | Running time: `O(1)`
-empty : CatQueue a
-empty = MkCatQueue [] []
+Semigroup (CatQueue q) where
+  (<+>) (MkCatQueue xs ys) (MkCatQueue zs ws) = MkCatQueue xs ((zs ++ reverse ws) ++ ys)
+
+Monoid (CatQueue q) where
+  neutral = MkCatQueue [] []
+
+Functor CatQueue where
+  map f (MkCatQueue xs ys) = MkCatQueue (map f xs) (map f ys)
+
+Foldable CatQueue where
+  foldr f init (MkCatQueue xs ys) = foldr f init (xs ++ reverse ys)
+  foldl f init (MkCatQueue xs ys) = foldl f init (xs ++ reverse ys)
+
+--------------------------------------------------------------------------------
+-- Functions
+--------------------------------------------------------------------------------
 
 -- | Test whether a queue is empty.
 -- |
@@ -75,9 +97,9 @@ uncons' (MkCatQueue [] r) = assert_total $ uncons' (MkCatQueue (reverse r) [])
 uncons' (MkCatQueue (a :: as) r) = Just (a, (MkCatQueue as r))
 
 
--------------------------------------------------------------------------------
--- | Properties
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- Properties
+--------------------------------------------------------------------------------
 
 snocNotEmpty : (x : a) -> (q : CatQueue a) -> {auto prf : EmptyCatQueue q} -> NonEmptyCatQueue (snoc q x)
 snocNotEmpty x q@(MkCatQueue [] []) = the (NonEmptyCatQueue (snoc q x)) (IsNonEmptyCatQueue (Right IsNonEmpty))

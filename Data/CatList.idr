@@ -67,7 +67,7 @@ append as bs = link as bs
 -- |
 -- | Running time: `O(1)`
 cons : a -> CatList a -> CatList a
-cons a cat = append (CatCons a empty) cat
+cons a cat = append (CatCons a neutral) cat
 
 -- | Create a catenable list with a single item.
 -- |
@@ -80,7 +80,7 @@ singleton a = cons a CatNil
 -- |
 -- | Running time: `O(1)`
 snoc : CatList a -> a -> CatList a
-snoc cat a = append cat (CatCons a empty)
+snoc cat a = append cat (CatCons a neutral)
 
 -- | Tail recursive version of foldr on `CatList`.
 -- |

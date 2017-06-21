@@ -1,9 +1,23 @@
 package catenatable_lists
 
+brief = "A port of the purescript catenatable-lists library in Idris"
+version = 0.0.1
+readme = ./README.md
+license = "MIT"
+author = "Risto Stevcev"
+maintainer = "Risto Stevcev"
+homepage = https://github.com/Risto-Stevcev/idris-catenatable-lists
+sourceloc = https://github.com/Risto-Stevcev/idris-catenatable-lists
+bugtracker = https://github.com/Risto-Stevcev/idris-catenatable-lists/issues
+
 modules = Data.CatList
         , Data.CatQueue
         , Data.List.Properties
         , Test.Data.CatQueue
+        , Test.Assert
 
 tests = Test.Data.CatQueue.fooIsBar
       , Test.Data.CatQueue.fooIsNotBaz
+      , Test.Data.CatQueue.nullIsEmpty
+
+pkgs = contrib
