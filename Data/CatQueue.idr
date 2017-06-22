@@ -6,6 +6,7 @@ import Interfaces.Verified
 %hide Prelude.List.reverse
 %hide Prelude.Strings.reverse
 %hide Prelude.Strings.null
+%hide Prelude.Strings.(++)
 
 %default total
 %access public export
@@ -23,6 +24,7 @@ data SingletonCatQueue : CatQueue a -> Type where
   IsSingletonCatQueueLeft : SingletonCatQueue (MkCatQueue [x] [])
   IsSingletonCatQueueRight : SingletonCatQueue (MkCatQueue [] [x])
 
+
 --------------------------------------------------------------------------------
 -- Implementations
 --------------------------------------------------------------------------------
@@ -32,21 +34,21 @@ Uninhabited (NonEmptyCatQueue (MkCatQueue [] [])) where
   uninhabited (IsNonEmptyCatQueue (Right IsNonEmpty)) impossible
 
 Show q => Show (CatQueue q) where
-  show (MkCatQueue xs ys) = "MkCatQueue " ++ show xs ++ " " ++ show ys
+  show (MkCatQueue xs ys) = "MkCatQueue " <+> show xs <+> " " <+> show ys
 
 Eq q => Eq (CatQueue q) where
   (==) (MkCatQueue xs ys) (MkCatQueue zs ws) =
-    xs ++ reverse ys == zs ++ reverse ws
+    xs <+> reverse ys == zs <+> reverse ws
   (/=) x y = not (x == y)
 
 Ord q => Ord (CatQueue q) where
   compare (MkCatQueue [] []) (MkCatQueue [] []) = EQ
   compare (MkCatQueue [] []) _ = LT
   compare _ (MkCatQueue [] []) = GT
-  compare (MkCatQueue xs ys) (MkCatQueue zs ws) = compare (xs ++ reverse ys) (zs ++ reverse ws)
+  compare (MkCatQueue xs ys) (MkCatQueue zs ws) = compare (xs <+> reverse ys) (zs <+> reverse ws)
 
 Semigroup (CatQueue q) where
-  (<+>) (MkCatQueue xs ys) (MkCatQueue zs ws) = MkCatQueue xs ((zs ++ reverse ws) ++ ys)
+  (<+>) (MkCatQueue xs ys) (MkCatQueue zs ws) = MkCatQueue ((xs <+> reverse ys) <+> (zs <+> reverse ws)) []
 
 Monoid (CatQueue q) where
   neutral = MkCatQueue [] []
@@ -55,8 +57,13 @@ Functor CatQueue where
   map f (MkCatQueue xs ys) = MkCatQueue (map f xs) (map f ys)
 
 Foldable CatQueue where
-  foldr f init (MkCatQueue xs ys) = foldr f init (xs ++ reverse ys)
-  foldl f init (MkCatQueue xs ys) = foldl f init (xs ++ reverse ys)
+  foldr f init (MkCatQueue xs ys) = foldr f init (xs <+> reverse ys)
+  foldl f init (MkCatQueue xs ys) = foldl f init (xs <+> reverse ys)
+
+
+--------------------------------------------------------------------------------
+-- Verified implementations
+--------------------------------------------------------------------------------
 
 VerifiedFunctor CatQueue where
   functorIdentity (MkCatQueue xs ys) =
@@ -65,6 +72,19 @@ VerifiedFunctor CatQueue where
   functorComposition (MkCatQueue xs ys) g1 g2 =
     rewrite functorComposition xs g1 g2 in
     rewrite functorComposition ys g1 g2 in Refl
+
+-- TODO: how do I formally write that this is an axiom?
+private
+proofCatQueueSame : (xs : List a) -> (ys : List a) -> MkCatQueue xs ys = MkCatQueue (xs <+> reverse ys) []
+proofCatQueueSame xs ys = ?proofCatQueueSame_rhs
+
+VerifiedSemigroup (CatQueue q) where
+  semigroupOpIsAssociative (MkCatQueue ls ls') (MkCatQueue cs cs') (MkCatQueue rs rs') = ?VerifiedSemigroup_rhs_1
+
+VerifiedMonoid (CatQueue q) where
+  monoidNeutralIsNeutralL (MkCatQueue xs ys) = ?VerifiedMonoid_rhs_1
+  monoidNeutralIsNeutralR (MkCatQueue xs ys) = ?VerifiedMonoid_rhs_2
+
 
 --------------------------------------------------------------------------------
 -- Functions
@@ -136,3 +156,29 @@ nullDecidable (MkCatQueue [] []) = Yes Refl
 nullDecidable (MkCatQueue (x::xs) []) = No uninhabited
 nullDecidable (MkCatQueue [] (x::xs)) = No uninhabited
 nullDecidable (MkCatQueue (x::xs) (y::ys)) = No uninhabited
+
+
+--------------------------------------------------------------------------------
+-- Proofs
+--------------------------------------------------------------------------------
+
+VerifiedSemigroup_rhs_1 = proof
+  intros
+  rewrite sym $ appendAssociative (ls ++ reverse' [] ls') ((cs ++ reverse' [] cs') ++ rs ++ reverse' [] rs') []
+  rewrite sym $ appendNilRightNeutral ((ls ++ reverse' [] ls') ++ cs ++ reverse' [] cs')
+  rewrite sym $ appendNilRightNeutral ((ls ++ reverse' [] ls') ++ (cs ++ reverse' [] cs') ++ rs ++ reverse' [] rs')
+  rewrite appendAssociative (ls ++ reverse' [] ls') cs (reverse' [] cs')
+  rewrite appendAssociative (ls ++ reverse' [] ls') (cs ++ reverse' [] cs') (rs ++ reverse' [] rs')
+  trivial
+
+Data.CatQueue.VerifiedMonoid_rhs_1 = proof
+  intros
+  rewrite appendNilRightNeutral (xs ++ reverse' [] ys)
+  rewrite sym $ appendNilRightNeutral (xs ++ reverse' [] ys)
+  rewrite proofCatQueueSame xs ys
+  trivial
+
+Data.CatQueue.VerifiedMonoid_rhs_2 = proof
+  intros
+  rewrite proofCatQueueSame xs ys
+  trivial

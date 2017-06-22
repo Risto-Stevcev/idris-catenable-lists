@@ -28,7 +28,7 @@ reverseNonEmpty (x :: xs) IsNonEmpty = go [x] IsNonEmpty xs where
   go acc pr []        = pr
   go acc _  (x :: xs) = go (x :: acc) IsNonEmpty xs
 
-reverseAppend : (xs : List a) -> (ys : List a) -> reverse' xs ys = reverse ys ++ xs
+reverseAppend : (xs : List a) -> (ys : List a) -> reverse' xs ys = reverse ys <+> xs
 reverseAppend xs [] = Refl
 reverseAppend xs (y :: ys) =
     rewrite reverseAppend [y] ys in
@@ -36,19 +36,19 @@ reverseAppend xs (y :: ys) =
     rewrite reverseAppend (y :: xs) ys in
     Refl
 
-reverseAppend' : (xs : List a) -> (ys : List a) -> (zs : List a) -> reverse' xs ys ++ zs = reverse' (xs ++ zs) ys
+reverseAppend' : (xs : List a) -> (ys : List a) -> (zs : List a) -> reverse' xs ys <+> zs = reverse' (xs <+> zs) ys
 reverseAppend' xs ys zs =
     rewrite reverseAppend xs ys in
-    rewrite reverseAppend (xs ++ zs) ys in
+    rewrite reverseAppend (xs <+> zs) ys in
     rewrite appendAssociative (reverse' [] ys) xs zs in
     Refl
 
 
 reverse2 : List a -> List a
 reverse2 [] = []
-reverse2 (x :: xs) = reverse2 xs ++ [x]
+reverse2 (x :: xs) = reverse2 xs <+> [x]
 
-reverse2Append : (xs : List a) -> (ys : List a) -> reverse2 (xs ++ ys) = reverse2 ys ++ reverse2 xs
+reverse2Append : (xs : List a) -> (ys : List a) -> reverse2 (xs <+> ys) = reverse2 ys <+> reverse2 xs
 reverse2Append [] ys = rewrite appendNilRightNeutral (reverse2 ys) in Refl
 reverse2Append (x :: xs) ys =
     rewrite appendAssociative (reverse2 ys) (reverse2 xs) [x] in

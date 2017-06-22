@@ -19,5 +19,6 @@ modules = Data.CatList
 tests = Test.Data.CatQueue.fooIsBar
       , Test.Data.CatQueue.fooIsNotBaz
       , Test.Data.CatQueue.nullIsEmpty
+      , Test.Data.CatQueue.xyzAssociative
 
 pkgs = contrib
