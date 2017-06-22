@@ -79,11 +79,21 @@ proofCatQueueSame : (xs : List a) -> (ys : List a) -> MkCatQueue xs ys = MkCatQu
 proofCatQueueSame xs ys = ?proofCatQueueSame_rhs
 
 VerifiedSemigroup (CatQueue q) where
-  semigroupOpIsAssociative (MkCatQueue ls ls') (MkCatQueue cs cs') (MkCatQueue rs rs') = ?VerifiedSemigroup_rhs_1
+  semigroupOpIsAssociative (MkCatQueue ls ls') (MkCatQueue cs cs') (MkCatQueue rs rs') =
+    rewrite appendAssociative (ls ++ reverse' [] ls') ((cs ++ reverse' [] cs') ++ rs ++ reverse' [] rs') [] in
+    rewrite appendNilRightNeutral ((ls ++ reverse' [] ls') ++ cs ++ reverse' [] cs') in
+    rewrite appendNilRightNeutral ((ls ++ reverse' [] ls') ++ (cs ++ reverse' [] cs') ++ rs ++ reverse' [] rs') in
+    rewrite appendAssociative (ls ++ reverse' [] ls') (cs ++ reverse' [] cs') (rs ++ reverse' [] rs') in
+    Refl
 
 VerifiedMonoid (CatQueue q) where
-  monoidNeutralIsNeutralL (MkCatQueue xs ys) = ?VerifiedMonoid_rhs_1
-  monoidNeutralIsNeutralR (MkCatQueue xs ys) = ?VerifiedMonoid_rhs_2
+  monoidNeutralIsNeutralL (MkCatQueue xs ys) =
+    rewrite appendNilRightNeutral (xs ++ reverse' [] ys) in
+    rewrite proofCatQueueSame xs ys in
+    Refl
+  monoidNeutralIsNeutralR (MkCatQueue xs ys) =
+    rewrite proofCatQueueSame xs ys in
+    Refl
 
 
 --------------------------------------------------------------------------------
@@ -156,29 +166,3 @@ nullDecidable (MkCatQueue [] []) = Yes Refl
 nullDecidable (MkCatQueue (x::xs) []) = No uninhabited
 nullDecidable (MkCatQueue [] (x::xs)) = No uninhabited
 nullDecidable (MkCatQueue (x::xs) (y::ys)) = No uninhabited
-
-
---------------------------------------------------------------------------------
--- Proofs
---------------------------------------------------------------------------------
-
-VerifiedSemigroup_rhs_1 = proof
-  intros
-  rewrite sym $ appendAssociative (ls ++ reverse' [] ls') ((cs ++ reverse' [] cs') ++ rs ++ reverse' [] rs') []
-  rewrite sym $ appendNilRightNeutral ((ls ++ reverse' [] ls') ++ cs ++ reverse' [] cs')
-  rewrite sym $ appendNilRightNeutral ((ls ++ reverse' [] ls') ++ (cs ++ reverse' [] cs') ++ rs ++ reverse' [] rs')
-  rewrite appendAssociative (ls ++ reverse' [] ls') cs (reverse' [] cs')
-  rewrite appendAssociative (ls ++ reverse' [] ls') (cs ++ reverse' [] cs') (rs ++ reverse' [] rs')
-  trivial
-
-Data.CatQueue.VerifiedMonoid_rhs_1 = proof
-  intros
-  rewrite appendNilRightNeutral (xs ++ reverse' [] ys)
-  rewrite sym $ appendNilRightNeutral (xs ++ reverse' [] ys)
-  rewrite proofCatQueueSame xs ys
-  trivial
-
-Data.CatQueue.VerifiedMonoid_rhs_2 = proof
-  intros
-  rewrite proofCatQueueSame xs ys
-  trivial
