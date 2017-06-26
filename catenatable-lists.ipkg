@@ -14,11 +14,14 @@ modules = Data.CatList
         , Data.CatQueue
         , Data.List.Properties
         , Test.Data.CatQueue
+        , Test.Data.CatList
         , Test.Assert
 
-tests = Test.Data.CatQueue.fooIsBar
+tests = Test.Data.CatQueue.showZ
+      , Test.Data.CatQueue.fooIsBar
       , Test.Data.CatQueue.fooIsNotBaz
       , Test.Data.CatQueue.nullIsEmpty
       , Test.Data.CatQueue.xyzAssociative
+      , Test.Data.CatList.showFoo
 
 pkgs = contrib

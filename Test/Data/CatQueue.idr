@@ -24,7 +24,13 @@ y = MkCatQueue [5,6] [7,8,9]
 
 z : CatQueue Nat
 z = MkCatQueue [10,11,12] [13]
---[1] [2,3,4]   [5,6] [7,8,9]   [10,11,12] [13]
+
+
+showZ : IO ()
+showZ =
+  assertEq
+    (show z)
+    "MkCatQueue [10, 11, 12] [13]"
 
 fooIsBar : IO ()
 fooIsBar = assertEq foo bar
@@ -40,4 +46,3 @@ xyzAssociative = do
   putStrLn $ show $ x <+> (y <+> z)
   putStrLn $ show $ (x <+> y) <+> z
   assertTrue $ x <+> (y <+> z) == (x <+> y) <+> z
-

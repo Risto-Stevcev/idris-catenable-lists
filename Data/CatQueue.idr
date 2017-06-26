@@ -65,6 +65,22 @@ Foldable CatQueue where
 -- Verified implementations
 --------------------------------------------------------------------------------
 
+-- TODO: how do I formally write that this is an axiom?
+private
+axiomCatQueueSame : (xs : List a) -> (ys : List a) -> MkCatQueue xs ys = MkCatQueue (xs <+> reverse ys) []
+axiomCatQueueSame xs ys = ?axiomCatQueueSame_rhs
+
+-- However, we can't use this axiom due to some limitations of ITT. Even though we have an axiom saying that these
+-- two CatQueues are the same, we can contradict this axiom easily:
+private
+inconsistentAxiom : MkCatQueue xs ys = MkCatQueue (xs <+> reverse ys) [] -> Void
+inconsistentAxiom = case axiomCatQueueSame [] [1] of Refl impossible
+
+-- This could be viewed as a reasonable compromise, since we're only using it internally to prove that other
+-- properties hold. But it severely limits the ability to provide proofs for this type of data structure, specifically
+-- any data structure where two different constructions are considered equal
+
+
 VerifiedFunctor CatQueue where
   functorIdentity (MkCatQueue xs ys) =
     rewrite functorIdentity xs in
@@ -72,11 +88,6 @@ VerifiedFunctor CatQueue where
   functorComposition (MkCatQueue xs ys) g1 g2 =
     rewrite functorComposition xs g1 g2 in
     rewrite functorComposition ys g1 g2 in Refl
-
--- TODO: how do I formally write that this is an axiom?
-private
-proofCatQueueSame : (xs : List a) -> (ys : List a) -> MkCatQueue xs ys = MkCatQueue (xs <+> reverse ys) []
-proofCatQueueSame xs ys = ?proofCatQueueSame_rhs
 
 VerifiedSemigroup (CatQueue q) where
   semigroupOpIsAssociative (MkCatQueue ls ls') (MkCatQueue cs cs') (MkCatQueue rs rs') =
@@ -89,10 +100,10 @@ VerifiedSemigroup (CatQueue q) where
 VerifiedMonoid (CatQueue q) where
   monoidNeutralIsNeutralL (MkCatQueue xs ys) =
     rewrite appendNilRightNeutral (xs ++ reverse' [] ys) in
-    rewrite proofCatQueueSame xs ys in
+    rewrite axiomCatQueueSame xs ys in
     Refl
   monoidNeutralIsNeutralR (MkCatQueue xs ys) =
-    rewrite proofCatQueueSame xs ys in
+    rewrite axiomCatQueueSame xs ys in
     Refl
 
 

@@ -1,9 +1,12 @@
 module Data.CatList
 
 import Data.CatQueue
+import Data.List.Properties
+import Interfaces.Verified
 
 %default total
 %access public export
+%hide Prelude.Stream.(::)
 
 -- | A strict catenable list.
 -- |
@@ -23,13 +26,10 @@ data EmptyCatList : CatList a -> Type where
 data SingletonCatList : CatList a -> Type where
   IsSingletonCatList : SingletonCatList (CatCons a (MkCatQueue [] []))
 
-Eq l => Eq (CatList l) where
-  (==) CatNil CatNil = True
-  (==) CatNil (CatCons x y) = False
-  (==) (CatCons x z) CatNil = False
-  (==) (CatCons x z) (CatCons y w) = x == y && (assert_total (z == w))
-  (/=) x y = not (x == y)
 
+--------------------------------------------------------------------------------
+-- Functions
+--------------------------------------------------------------------------------
 
 -- | Create an empty catenable list.
 -- |
@@ -110,6 +110,92 @@ uncons' : CatList a -> Maybe (a, (CatList a))
 uncons' CatNil = Nothing
 uncons' (CatCons a q) = Just (a, (if null q then CatNil else (foldr link CatNil q)))
 
+
+--------------------------------------------------------------------------------
+-- Implementations
+--------------------------------------------------------------------------------
+
+Eq l => Eq (CatList l) where
+  (==) CatNil CatNil = True
+  (==) CatNil (CatCons x y) = False
+  (==) (CatCons x z) CatNil = False
+  (==) (CatCons x z) (CatCons y w) = x == y && (assert_total (z == w))
+  (/=) x y = not (x == y)
+
+Show l => Show (CatList l) where
+  show CatNil = "CatNil"
+  show (CatCons x y) = "CatCons " <+> show x <+> " " <+> assert_total (show y)
+
+Ord l => Ord (CatList l) where
+  compare CatNil CatNil = EQ
+  compare CatNil _ = LT
+  compare _ CatNil = GT
+  compare (CatCons _ z) (CatCons _ w) = assert_total $ compare z w
+
+Semigroup (CatList l) where
+  (<+>) xs ys = append xs ys
+
+Monoid (CatList l) where
+  neutral = empty
+
+Functor CatList where
+  map f CatNil = CatNil
+  map f (CatCons x y) = CatCons (f x) (assert_total $ map (\e => map f e) y)
+
+
+--------------------------------------------------------------------------------
+-- Verified implementations
+--------------------------------------------------------------------------------
+
+mapDistCons : (Functor m) => (f : a -> b) -> (x : m a) -> (xs : List (m a)) ->
+              map (\e => map f e) (x :: xs) = map f x :: map (\e => map f e) xs
+mapDistCons f x [] = Refl
+mapDistCons f x (y :: xs) = Refl
+
+total
+mapFunctorIdentity : (VerifiedFunctor m) => (x : m a) -> (xs : List (m a)) ->
+                     map (\e => map Prelude.Basics.id e) (x :: xs) = (x :: xs)
+mapFunctorIdentity x [] =
+  let verifiedFunctorIdentity = functorIdentity x in
+  rewrite verifiedFunctorIdentity in Refl
+mapFunctorIdentity x (y :: ys) =
+  let verifiedFunctorIdentity = functorIdentity x in
+  let inductiveHypothesis = mapFunctorIdentity y ys in
+  rewrite verifiedFunctorIdentity in
+  rewrite inductiveHypothesis in Refl
+
+
+VerifiedFunctor CatList where
+  functorIdentity CatNil = Refl
+  functorIdentity (CatCons x (MkCatQueue [] [])) = Refl
+  functorIdentity (CatCons x (MkCatQueue [] (y :: ys))) =
+    rewrite assert_total $ mapFunctorIdentity y ys in Refl
+  functorIdentity (CatCons x (MkCatQueue (y :: ys) [])) =
+    rewrite assert_total $ mapFunctorIdentity y ys in Refl
+  functorIdentity (CatCons x (MkCatQueue (y :: ys) (z :: zs))) =
+    rewrite assert_total $ mapFunctorIdentity y ys in
+    rewrite assert_total $ mapFunctorIdentity z zs in Refl
+  functorComposition CatNil g1 g2 = Refl
+  functorComposition (CatCons x (MkCatQueue [] [])) g1 g2 = Refl
+  functorComposition (CatCons x (MkCatQueue [] (y :: xs))) g1 g2 =
+    let ind = functorComposition (y :: xs) (map g1) (map g2) in ?VerifiedFunctor_rhs_4
+  functorComposition (CatCons x (MkCatQueue (y :: xs) ys)) g1 g2 = ?VerifiedFunctor_rhs_3
+
+VerifiedSemigroup (CatList a) where
+  semigroupOpIsAssociative CatNil CatNil CatNil = Refl
+  semigroupOpIsAssociative CatNil CatNil (CatCons x y) = Refl
+  semigroupOpIsAssociative CatNil (CatCons x y) CatNil = Refl
+  semigroupOpIsAssociative CatNil (CatCons x y) (CatCons z w) = Refl
+  semigroupOpIsAssociative (CatCons x y) CatNil CatNil = Refl
+  semigroupOpIsAssociative (CatCons x y) CatNil (CatCons z w) = Refl
+  semigroupOpIsAssociative (CatCons x y) (CatCons z w) CatNil = Refl
+  semigroupOpIsAssociative (CatCons x (MkCatQueue xs ys)) (CatCons z (MkCatQueue zs ws)) (CatCons s (MkCatQueue y w)) = ?VerifiedSemigroup_rhs_3
+
+VerifiedMonoid (CatList a) where
+  monoidNeutralIsNeutralL CatNil = Refl
+  monoidNeutralIsNeutralL (CatCons x y) = Refl
+  monoidNeutralIsNeutralR CatNil = Refl
+  monoidNeutralIsNeutralR (CatCons x y) = Refl
 
 
 -------------------------------------------------------------------------------
